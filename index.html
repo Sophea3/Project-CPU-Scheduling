@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CPU Scheduling Algorithm Simulator</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 30px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #667eea;
+      margin-bottom: 10px;
+      font-size: 2.5em;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #999;
+      margin-bottom: 30px;
+      font-size: 0.95em;
+    }
+
+    .controls-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 30px;
+      border-left: 5px solid #667eea;
+    }
+
+    .controls-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+
+    .control-item {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    label {
+      font-weight: 600;
+      color: #555;
+      font-size: 0.9em;
+    }
+
+    select, input[type="number"], input[type="text"], textarea {
+      padding: 10px 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 0.95em;
+      transition: border 0.3s;
+      font-family: inherit;
+    }
+
+    select:focus, input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-secondary {
+      background: #e0e0e0;
+      color: #333;
+    }
+
+    .btn-secondary:hover {
+      background: #d0d0d0;
+    }
+
+    .section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 1.5em;
+      color: #333;
+      margin-bottom: 15px;
+      font-weight: 700;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    /* Input Table */
+    .table-wrapper {
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    th {
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+    }
+
+    td {
+      padding: 12px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    tbody tr:hover {
+      background: #f8f9fa;
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .editable {
+      background: #fffbeb;
+      border: 1px solid #fcd34d;
+      min-width: 60px;
+      text-align: center;
+      cursor: text;
+    }
+
+    /* Gantt Chart */
+    .gantt-container {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      overflow-x: auto;
+    }
+
+    .gantt-title {
+      font-size: 0.95em;
+      color: #666;
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+
+    .gantt-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 2px;
+      min-height: 100px;
+      margin-bottom: 10px;
+    }
+
+    .gantt-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+      border-radius: 4px;
+      min-width: 30px;
+      font-size: 0.85em;
+      position: relative;
+      transition: all 0.3s;
+    }
+
+    .gantt-bar:hover {
+      filter: brightness(1.2);
+      transform: translateY(-5px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .gantt-timeline {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8em;
+      color: #999;
+      margin-top: 5px;
+      padding: 0 5px;
+    }
+
+    /* Metrics Table */
+    .metrics-summary {
+      background: #f0f4ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      border-left: 5px solid #667eea;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+    }
+
+    .metric-box {
+      background: white;
+      padding: 12px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .metric-label {
+      font-size: 0.8em;
+      color: #999;
+      text-transform: uppercase;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .metric-value {
+      font-size: 1.8em;
+      color: #667eea;
+      font-weight: 700;
+    }
+
+    /* Queue/Info Area */
+    .info-box {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 8px;
+      border-left: 5px solid #667eea;
+      font-family: 'Courier New', monospace;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+      font-size: 0.9em;
+      line-height: 1.6;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .algorithm-card {
+      background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+      padding: 20px;
+      border-radius: 10px;
+      border-left: 5px solid #667eea;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+      min-height: 150px;
+    }
+
+    .algorithm-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .algorithm-name {
+      font-weight: 700;
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 1.2em;
+      border-bottom: 2px solid #667eea;
+      padding-bottom: 10px;
+    }
+
+    .algorithm-stats {
+      font-size: 0.95em;
+      line-height: 2;
+    }
+
+    .algorithm-stats strong {
+      color: #555;
+    }
+
+    /* Color Palette */
+    .color0 { background-color: #FF6B6B; }
+    .color1 { background-color: #4ECDC4; }
+    .color2 { background-color: #45B7D1; }
+    .color3 { background-color: #FFA07A; }
+    .color4 { background-color: #98D8C8; }
+    .color5 { background-color: #F7DC6F; color: #333; }
+    .color6 { background-color: #BB8FCE; }
+    .color7 { background-color: #85C1E2; }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>⚙️ CPU Scheduling Algorithm Simulator</h1>
+  <p class="subtitle">Simulate and compare different scheduling algorithms for process management</p>
+
+  <!-- Controls Section -->
+  <div class="controls-section">
+    <div class="controls-group">
+      <div class="control-item">
+        <label for="algorithm">Select Algorithm:</label>
+        <select id="algorithm">
+          <option value="FCFS">FCFS (First Come First Serve)</option>
+          <option value="SJF">SJF (Shortest Job First)</option>
+          <option value="SRT">SRT (Shortest Remaining Time)</option>
+          <option value="RR">RR (Round Robin)</option>
+          <option value="MLFQ">MLFQ (Multilevel Feedback Queue)</option>
+        </select>
+      </div>
+      <div class="control-item">
+        <label for="quantum">Time Quantum (RR/MLFQ):</label>
+        <input type="number" id="quantum" value="2" min="1">
+      </div>
+    </div>
+    <div class="button-group">
+      <button class="btn-primary" onclick="simulate()">▶ Run Simulation</button>
+    </div>
+  </div>
+
+  <!-- Process Input Section -->
+  <div class="section">
+    <div class="section-title">📥 Process Input</div>
+    <div class="table-wrapper">
+      <table id="inputTable">
+        <thead>
+          <tr>
+            <th>Process ID</th>
+            <th>Arrival Time</th>
+            <th>Burst Time</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="inputTableBody">
+          <tr>
+            <td class="editable" contenteditable="true">P1</td>
+            <td class="editable" contenteditable="true">0</td>
+            <td class="editable" contenteditable="true">5</td>
+            <td><button class="btn-secondary" onclick="deleteRow(this)">Delete</button></td>
+          </tr>
+          <tr>
+            <td class="editable" contenteditable="true">P2</td>
+            <td class="editable" contenteditable="true">1</td>
+            <td class="editable" contenteditable="true">3</td>
+            <td><button class="btn-secondary" onclick="deleteRow(this)">Delete</button></td>
+          </tr>
+          <tr>
+            <td class="editable" contenteditable="true">P3</td>
+            <td class="editable" contenteditable="true">2</td>
+            <td class="editable" contenteditable="true">8</td>
+            <td><button class="btn-secondary" onclick="deleteRow(this)">Delete</button></td>
+          </tr>
+          <tr>
+            <td class="editable" contenteditable="true">P4</td>
+            <td class="editable" contenteditable="true">3</td>
+            <td class="editable" contenteditable="true">6</td>
+            <td><button class="btn-secondary" onclick="deleteRow(this)">Delete</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <button class="btn-secondary" onclick="addProcessRow()">➕ Add Process</button>
+  </div>
+
+  <!-- Results Section -->
+  <div id="resultsSection" class="section hidden" style="min-height: 600px;">
+    <!-- Gantt Chart -->
+    <div class="section-title">📊 Gantt Chart</div>
+    <div class="gantt-container">
+      <div class="gantt-title">Timeline View</div>
+      <div class="gantt-chart" id="ganttChart"></div>
+      <div class="gantt-timeline" id="ganttTimeline"></div>
+    </div>
+
+    <!-- Metrics Summary -->
+    <div class="section-title">📈 Performance Metrics</div>
+    <div class="metrics-summary" id="metricsSummary"></div>
+
+    <!-- Detailed Results Table -->
+    <div class="table-wrapper">
+      <table>
+        <thead>
+          <tr>
+            <th>Process ID</th>
+            <th>Arrival Time</th>
+            <th>Burst Time</th>
+            <th>Completion Time</th>
+            <th>Turnaround Time</th>
+            <th>Waiting Time</th>
+            <th>Response Time</th>
+          </tr>
+        </thead>
+        <tbody id="resultTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="section-title">ℹ️ Algorithm Details</div>
+    <div class="info-box" id="infoBox"></div>
+  </div>
+
+  <!-- Comparison Section -->
+  <div id="comparisonSection" class="section hidden" style="min-height: 500px;">
+    <div class="section-title">🏆 Algorithm Comparison</div>
+    <div class="comparison-grid" id="comparisonGrid"></div>
+  </div>
+
+</div>
+
+<script>
+  // Color palette
+  const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+
+  // Add a new process row
+  function addProcessRow() {
+    const tbody = document.getElementById('inputTableBody');
+    const newIndex = tbody.children.length + 1;
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="editable" contenteditable="true">P${newIndex}</td>
+      <td class="editable" contenteditable="true">0</td>
+      <td class="editable" contenteditable="true">5</td>
+      <td><button class="btn-secondary" onclick="deleteRow(this)">Delete</button></td>
+    `;
+    tbody.appendChild(row);
+  }
+
+  // Delete a process row
+  function deleteRow(btn) {
+    btn.parentElement.parentElement.remove();
+  }
+    
+  // Get processes from input table
+  function getProcesses() {
+    const processes = [];
+    document.querySelectorAll('#inputTableBody tr').forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length >= 3) {
+        processes.push({
+          pid: cells[0].textContent.trim(),
+          arrival: parseInt(cells[1].textContent.trim()) || 0,
+          burst: parseInt(cells[2].textContent.trim()) || 1,
+          remaining: parseInt(cells[2].textContent.trim()) || 1,
+          completion: 0,
+          waiting: 0,
+          turnaround: 0,
+          response: -1,
+          firstExecution: -1
+        });
+      }
+    });
+    return processes;
+  }
+
+  // FCFS Algorithm
+  function runFCFS(processes) {
+    let time = 0;
+    let ganttOrder = [];
+    let ganttTimes = [0];
+
+    let sortedProcesses = [...processes].sort((a, b) => a.arrival - b.arrival);
+
+    sortedProcesses.forEach(p => {
+      if (time < p.arrival) time = p.arrival;
+      p.response = time - p.arrival;
+      ganttOrder.push(p.pid);
+      time += p.burst;
+      ganttTimes.push(time);
+      p.completion = time;
+      p.turnaround = p.completion - p.arrival;
+      p.waiting = p.turnaround - p.burst;
+    });
+
+    return {
+      processes: sortedProcesses,
+      ganttOrder,
+      ganttTimes,
+      info: 'FCFS executes processes in the order they arrive. No preemption occurs.'
+    };
+  }
+
+  // SJF Algorithm (Non-preemptive)
+  function runSJF(processes) {
+    let time = 0;
+    let ganttOrder = [];
+    let ganttTimes = [0];
+    let processed = new Set();
+
+    while (processed.size < processes.length) {
+      let available = processes.filter(p => !processed.has(p.pid) && p.arrival <= time);
+      if (available.length === 0) {
+        time++;
+        continue;
+      }
+
+      let p = available.sort((a, b) => a.burst - b.burst)[0];
+      p.response = time - p.arrival;
+      ganttOrder.push(p.pid);
+      time += p.burst;
+      ganttTimes.push(time);
+      p.completion = time;
+      p.turnaround = p.completion - p.arrival;
+      p.waiting = p.turnaround - p.burst;
+      processed.add(p.pid);
+    }
+
+    return {
+      processes,
+      ganttOrder,
+      ganttTimes,
+      info: 'SJF selects the process with the shortest burst time. Non-preemptive: once started, a process runs to completion.'
+    };
+  }
+
+  // SRT Algorithm (Preemptive)
+  function runSRT(processes) {
+    let time = 0;
+    let ganttOrder = [];
+    let ganttTimes = [0];
+    let completed = new Set();
+    let cpuProcs = JSON.parse(JSON.stringify(processes)).map(p => ({...p, remaining: p.burst}));
+
+    while (completed.size < processes.length) {
+      let available = cpuProcs.filter(p => !completed.has(p.pid) && p.arrival <= time);
+      if (available.length === 0) {
+        time++;
+        continue;
+      }
+
+      let p = available.sort((a, b) => a.remaining - b.remaining)[0];
+      if (p.response === -1) p.response = time - p.arrival;
+      
+      ganttOrder.push(p.pid);
+      p.remaining--;
+      time++;
+      ganttTimes.push(time);
+
+      if (p.remaining === 0) {
+        p.completion = time;
+        p.turnaround = p.completion - p.arrival;
+        p.waiting = p.turnaround - p.burst;
+        completed.add(p.pid);
+        let original = processes.find(pr => pr.pid === p.pid);
+        Object.assign(original, p);
+      }
+    }
+
+    return {
+      processes,
+      ganttOrder,
+      ganttTimes,
+      info: 'SRT is preemptive SJF: the process with the shortest remaining time is executed. Can be preempted by newly arriving process with less remaining time.'
+    };
+  }
+
+  // Round Robin Algorithm
+  function runRR(processes, quantum) {
+    let time = 0;
+    let ganttOrder = [];
+    let ganttTimes = [0];
+    let queue = [];
+    let completed = new Set();
+    let cpuProcs = JSON.parse(JSON.stringify(processes)).map(p => ({...p, remaining: p.burst}));
+
+    while (completed.size < processes.length) {
+      // Add newly arrived processes
+      cpuProcs.forEach(p => {
+        if (p.arrival <= time && !completed.has(p.pid) && !queue.find(q => q.pid === p.pid)) {
+          queue.push(p);
+        }
+      });
+
+      if (queue.length === 0) {
+        time++;
+        continue;
+      }
+
+      let p = queue.shift();
+      if (p.response === -1) p.response = time - p.arrival;
+
+      let exec = Math.min(quantum, p.remaining);
+      p.remaining -= exec;
+      ganttOrder.push(p.pid);
+      time += exec;
+      ganttTimes.push(time);
+
+      if (p.remaining > 0) {
+        queue.push(p);
+      } else {
+        p.completion = time;
+        p.turnaround = p.completion - p.arrival;
+        p.waiting = p.turnaround - p.burst;
+        completed.add(p.pid);
+        let original = processes.find(pr => pr.pid === p.pid);
+        Object.assign(original, p);
+      }
+    }
+
+    return {
+      processes,
+      ganttOrder,
+      ganttTimes,
+      info: `Round Robin with time quantum = ${quantum}. Each process gets at most ${quantum} time units before moving to the back of the queue.`
+    };
+  }
+
+  // MLFQ Algorithm
+  function runMLFQ(processes, quantum) {
+    let time = 0;
+    let ganttOrder = [];
+    let ganttTimes = [0];
+    let q0 = [], q1 = [], q2 = [];
+    let completed = new Set();
+    let cpuProcs = JSON.parse(JSON.stringify(processes)).map(p => ({...p, remaining: p.burst, queue: 0}));
+    let queueLog = [];
+    let maxIterations = 100000; // Prevent infinite loops
+    let iterations = 0;
+
+    while (completed.size < processes.length && iterations < maxIterations) {
+      iterations++;
+      
+      // Add newly arrived processes to Q0
+      cpuProcs.forEach(p => {
+        if (p.arrival <= time && !completed.has(p.pid) && !q0.find(q => q.pid === p.pid) && !q1.find(q => q.pid === p.pid) && !q2.find(q => q.pid === p.pid)) {
+          q0.push(p);
+          if (p.arrival === time) {
+            queueLog.push(`t=${time}: ${p.pid} arrives -> Q0`);
+          }
+        }
+      });
+
+      let p = null;
+      let timeQ = 0;
+
+      if (q0.length > 0) { p = q0.shift(); timeQ = quantum; p.queue = 0; }
+      else if (q1.length > 0) { p = q1.shift(); timeQ = quantum * 2; p.queue = 1; }
+      else if (q2.length > 0) { p = q2.shift(); timeQ = p.remaining; p.queue = 2; }
+      else { 
+        // Find next arrival time
+        let nextArrival = Math.min(...cpuProcs.filter(pr => !completed.has(pr.pid) && pr.arrival > time).map(pr => pr.arrival));
+        if (nextArrival === Infinity) break;
+        time = nextArrival;
+        continue;
+      }
+
+      if (p.response === -1) p.response = time - p.arrival;
+
+      let exec = Math.min(timeQ, p.remaining);
+      p.remaining -= exec;
+      ganttOrder.push(p.pid);
+      time += exec;
+      ganttTimes.push(time);
+
+      if (p.remaining === 0) {
+        p.completion = time;
+        p.turnaround = p.completion - p.arrival;
+        p.waiting = p.turnaround - p.burst;
+        completed.add(p.pid);
+        queueLog.push(`t=${time}: ${p.pid} completed`);
+        let original = processes.find(pr => pr.pid === p.pid);
+        Object.assign(original, p);
+      } else {
+        if (timeQ === quantum) {
+          q1.push(p);
+          queueLog.push(`t=${time}: ${p.pid} moves Q0 -> Q1`);
+        } else {
+          q2.push(p);
+          queueLog.push(`t=${time}: ${p.pid} stays in Q2`);
+        }
+      }
+    }
+
+    let info = `MLFQ with 3 queues:\n`;
+    info += `Q0: Time Quantum = ${quantum}\n`;
+    info += `Q1: Time Quantum = ${quantum * 2}\n`;
+    info += `Q2: FCFS (no preemption)\n\n`;
+    info += `Queue Transitions:\n` + queueLog.join('\n');
+
+    return {
+      processes,
+      ganttOrder,
+      ganttTimes,
+      info
+    };
+  }
+
+  // Run simulation
+  function simulate() {
+    try {
+      const algorithm = document.getElementById('algorithm').value;
+      const quantum = parseInt(document.getElementById('quantum').value) || 2;
+      const processes = getProcesses();
+
+      if (processes.length === 0) {
+        alert('Please add at least one process');
+        return;
+      }
+
+      let result;
+      switch (algorithm) {
+        case 'FCFS':
+          result = runFCFS(processes);
+          break;
+        case 'SJF':
+          result = runSJF(processes);
+          break;
+        case 'SRT':
+          result = runSRT(processes);
+          break;
+        case 'RR':
+          result = runRR(processes, quantum);
+          break;
+        case 'MLFQ':
+          result = runMLFQ(processes, quantum);
+          break;
+      }
+
+      displayResults(result);
+      document.getElementById('resultsSection').classList.remove('hidden');
+      document.getElementById('comparisonSection').classList.add('hidden');
+      
+      // Scroll to results section
+      setTimeout(() => {
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      
+      console.log('Simulation completed for', algorithm);
+    } catch(e) {
+      console.error('Error in simulate:', e);
+      alert('Error running simulation. Check console for details.');
+    }
+  }
+
+  // Display results
+  function displayResults(result) {
+    const { processes, ganttOrder, ganttTimes, info } = result;
+
+    // Display Gantt Chart
+    displayGanttChart(ganttOrder, ganttTimes);
+
+    // Display Metrics
+    displayMetrics(processes);
+
+    // Display Results Table
+    displayResultsTable(processes);
+
+    // Display Info
+    document.getElementById('infoBox').textContent = info;
+  }
+
+  // Draw Gantt Chart
+  function displayGanttChart(ganttOrder, ganttTimes) {
+    const container = document.getElementById('ganttChart');
+    container.innerHTML = '';
+
+    const maxTime = ganttTimes[ganttTimes.length - 1];
+    const barWidth = Math.max(40, 600 / ganttOrder.length);
+
+    ganttOrder.forEach((pid, idx) => {
+      const start = ganttTimes[idx];
+      const end = ganttTimes[idx + 1];
+      const width = (end - start) / maxTime * 500;
+
+      const bar = document.createElement('div');
+      bar.className = 'gantt-bar color' + (parseInt(pid.substring(1)) - 1) % 8;
+      bar.style.width = width + 'px';
+      bar.textContent = pid;
+      bar.title = `${pid}: ${start}-${end}`;
+      container.appendChild(bar);
+    });
+
+    // Display timeline
+    const timeline = document.getElementById('ganttTimeline');
+    timeline.innerHTML = '';
+    for (let i = 0; i <= ganttTimes[ganttTimes.length - 1]; i++) {
+      const label = document.createElement('span');
+      label.textContent = i;
+      label.style.marginRight = ((500 / ganttTimes[ganttTimes.length - 1]) - 20) + 'px';
+      timeline.appendChild(label);
+    }
+  }
+
+  // Display metrics summary
+  function displayMetrics(processes) {
+    let avgWT = processes.reduce((s, p) => s + p.waiting, 0) / processes.length;
+    let avgTAT = processes.reduce((s, p) => s + p.turnaround, 0) / processes.length;
+    let avgRT = processes.reduce((s, p) => s + p.response, 0) / processes.length;
+
+    const summary = document.getElementById('metricsSummary');
+    summary.innerHTML = `
+      <div class="metric-box">
+        <div class="metric-label">Avg Waiting Time</div>
+        <div class="metric-value">${avgWT.toFixed(2)}</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Avg Turnaround Time</div>
+        <div class="metric-value">${avgTAT.toFixed(2)}</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Avg Response Time</div>
+        <div class="metric-value">${avgRT.toFixed(2)}</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Total Processes</div>
+        <div class="metric-value">${processes.length}</div>
+      </div>
+    `;
+  }
+
+  // Display results table
+  function displayResultsTable(processes) {
+    const tbody = document.getElementById('resultTableBody');
+    tbody.innerHTML = '';
+
+    processes.forEach((p, idx) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${p.pid}</td>
+        <td>${p.arrival}</td>
+        <td>${p.burst}</td>
+        <td>${p.completion}</td>
+        <td>${p.turnaround}</td>
+        <td>${p.waiting}</td>
+        <td>${p.response}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Compare all algorithms
+  function compareAll() {
+    try {
+      const processes = getProcesses();
+      if (processes.length === 0) {
+        alert('Please add at least one process');
+        return;
+      }
+
+      const quantum = parseInt(document.getElementById('quantum').value) || 2;
+      const results = {
+        FCFS: runFCFS(JSON.parse(JSON.stringify(processes))),
+        SJF: runSJF(JSON.parse(JSON.stringify(processes))),
+        SRT: runSRT(JSON.parse(JSON.stringify(processes))),
+        RR: runRR(JSON.parse(JSON.stringify(processes)), quantum),
+        MLFQ: runMLFQ(JSON.parse(JSON.stringify(processes)), quantum)
+      };
+
+      displayComparison(results);
+      document.getElementById('comparisonSection').classList.remove('hidden');
+      document.getElementById('resultsSection').classList.add('hidden');
+      
+      // Scroll to comparison section
+      setTimeout(() => {
+        document.getElementById('comparisonSection').scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+      
+      console.log('Comparison displayed successfully');
+    } catch(e) {
+      console.error('Error in compareAll:', e);
+      alert('Error running comparison. Check console for details.');
+    }
+  }
+
+  // Display comparison
+  function displayComparison(results) {
+    try {
+      const grid = document.getElementById('comparisonGrid');
+      if (!grid) {
+        console.error('comparisonGrid not found');
+        return;
+      }
+      
+      grid.innerHTML = '';
+
+      Object.keys(results).forEach((algo, idx) => {
+        const procs = results[algo].processes;
+        const avgWT = procs.reduce((s, p) => s + p.waiting, 0) / procs.length;
+        const avgTAT = procs.reduce((s, p) => s + p.turnaround, 0) / procs.length;
+        const avgRT = procs.reduce((s, p) => s + p.response, 0) / procs.length;
+
+        const card = document.createElement('div');
+        card.className = 'algorithm-card';
+        card.innerHTML = `
+          <div class="algorithm-name">📊 ${algo}</div>
+          <div class="algorithm-stats">
+            <strong>Avg Waiting Time:</strong> <span style="color: #667eea; font-size: 1.2em;">${avgWT.toFixed(2)}</span><br>
+            <strong>Avg Turnaround Time:</strong> <span style="color: #667eea; font-size: 1.2em;">${avgTAT.toFixed(2)}</span><br>
+            <strong>Avg Response Time:</strong> <span style="color: #667eea; font-size: 1.2em;">${avgRT.toFixed(2)}</span><br>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+      console.log('Comparison grid populated with', Object.keys(results).length, 'algorithms');
+    } catch(e) {
+      console.error('Error in displayComparison:', e);
+    }
+  }
+
+  // Export to CSV
+  function exportCSV() {
+    try {
+      const processes = getProcesses();
+      if (processes.length === 0) {
+        alert('No data to export');
+        return;
+      }
+
+      let csv = 'Process ID,Arrival Time,Burst Time,Completion Time,Turnaround Time,Waiting Time,Response Time\n';
+      processes.forEach(p => {
+        csv += `${p.pid},${p.arrival},${p.burst},${p.completion},${p.turnaround},${p.waiting},${p.response}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'cpu_scheduling_results.csv');
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      console.log('CSV exported successfully');
+      alert('CSV file downloaded: cpu_scheduling_results.csv');
+    } catch(e) {
+      console.error('Error exporting CSV:', e);
+      alert('Error exporting CSV');
+    }
+  }
+
+  // Load sample data on page load
+  function loadSampleData() {
+    // Sample data is already loaded in the HTML, no additional loading needed
+  }
+
+  window.addEventListener('load', () => {
+    loadSampleData();
+  });
+</script>
+
+</body>
+</html>
