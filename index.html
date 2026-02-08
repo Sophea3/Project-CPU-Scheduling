@@ -192,9 +192,11 @@
     .gantt-chart {
       display: flex;
       align-items: flex-end;
-      gap: 2px;
+      gap: 0px;
       min-height: 100px;
-      margin-bottom: 10px;
+      margin-bottom: 0px;
+      border: 1px solid #ddd;
+      border-bottom: none;
     }
 
     .gantt-bar {
@@ -203,11 +205,12 @@
       justify-content: center;
       color: white;
       font-weight: bold;
-      border-radius: 4px;
-      min-width: 30px;
+      border-radius: 0px;
+      min-width: 10px;
       font-size: 0.85em;
       position: relative;
       transition: all 0.3s;
+      border-right: 1px solid rgba(0, 0, 0, 0.2);
     }
 
     .gantt-bar:hover {
@@ -218,11 +221,13 @@
 
     .gantt-timeline {
       display: flex;
-      justify-content: space-between;
+      align-items: flex-end;
       font-size: 0.8em;
       color: #999;
       margin-top: 5px;
-      padding: 0 5px;
+      padding: 0;
+      border-top: 2px solid #999;
+      height: 30px;
     }
 
     /* Metrics Table */
@@ -794,6 +799,7 @@
 
     const maxTime = ganttTimes[ganttTimes.length - 1];
     const barWidth = Math.max(40, 600 / ganttOrder.length);
+    const pixelsPerUnit = 500 / maxTime;
 
     ganttOrder.forEach((pid, idx) => {
       const start = ganttTimes[idx];
@@ -811,11 +817,24 @@
     // Display timeline
     const timeline = document.getElementById('ganttTimeline');
     timeline.innerHTML = '';
-    for (let i = 0; i <= ganttTimes[ganttTimes.length - 1]; i++) {
-      const label = document.createElement('span');
+    timeline.style.display = 'flex';
+    timeline.style.alignItems = 'flex-end';
+    timeline.style.paddingLeft = '0px';
+    
+    for (let i = 0; i <= maxTime; i++) {
+      const labelContainer = document.createElement('div');
+      labelContainer.style.flex = '0 0 auto';
+      labelContainer.style.width = pixelsPerUnit + 'px';
+      labelContainer.style.textAlign = 'center';
+      labelContainer.style.fontSize = '0.85em';
+      labelContainer.style.color = '#666';
+      labelContainer.style.borderLeft = i % 2 === 0 ? '1px solid #999' : '1px solid #ddd';
+      labelContainer.style.paddingTop = '5px';
+      
+      const label = document.createElement('div');
       label.textContent = i;
-      label.style.marginRight = ((500 / ganttTimes[ganttTimes.length - 1]) - 20) + 'px';
-      timeline.appendChild(label);
+      labelContainer.appendChild(label);
+      timeline.appendChild(labelContainer);
     }
   }
 
